@@ -2,11 +2,19 @@ import { Request, Response } from "express";
 import { createUser, findUserByEmail } from "../respository/user.repository";
 import { comparePassword, hashPassword } from "../utils/password";
 import { signAccessToken } from "../utils/jwt";
+import { safeParse } from "zod";
+import { loginSchema, signupSchema } from "../schemas/auth.schema";
+import { parse } from "dotenv";
 
 
 
 export const authorize = async(req : Request,res:Response) => {
-  const { email , password }    = req.body;
+  const parsedBody = loginSchema.safeParse(req.body)
+  console.log(parsedBody)
+  if (!parsedBody.success) {
+    throw new Error("INVALID_CREDINTIALS");
+  }
+  const { email , password }    = parsedBody.data;
   const user = await findUserByEmail(email);
  
   if(!user){
@@ -29,7 +37,11 @@ export const authorize = async(req : Request,res:Response) => {
 }
 
 export const signUp = async(req:Request,res:Response) => {
-  const { username , password , role , email} = req.body;
+  const parsedBody = signupSchema.safeParse(req.body)
+  if (!parsedBody.success) {
+    throw new Error("INVALID_CREDINTIALS");
+  }
+  const { username , password , role , email} = parsedBody.data;
   try{
   const hashedPassword =  await hashPassword(password);
   console.log(hashedPassword , password)
